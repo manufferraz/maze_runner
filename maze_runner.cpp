@@ -121,8 +121,8 @@ bool walk(pos_t initial_pos) {
 
 
 
-int main() {
-    pos_t initial_pos = load_maze("../data/maze2.txt", &maze, num_rows, num_cols);
+int main(int argc, char* argv[]) {
+    pos_t initial_pos = load_maze(argv[1], &maze, num_rows, num_cols);
     std::cout << "Posição inicial: (" << initial_pos.i << ", " << initial_pos.j << ")" << std::endl;
 
     bool exit_found = walk(initial_pos);
