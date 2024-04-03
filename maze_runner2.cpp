@@ -67,7 +67,6 @@ pos_t load_maze(const char* file_name, char*** mazePtr, int& num_rows, int& num_
 
 // Função que imprime o labirinto
 void print_maze(char** maze, int num_rows, int num_cols) {
-    //std::lock_guard<std::mutex> lock(print_mtx);
     if (maze == nullptr) {
         std::cerr << "O labirinto não foi carregado corretamente." << std::endl;
         return;
@@ -89,34 +88,45 @@ bool isValid(int i, int j) {
 
 
 bool walk(pos_t initial_pos) {
+    mtx.lock();
     valid_positions.push(initial_pos); 
+    mtx.unlock();
 
     while (!valid_positions.empty()) {
+        mtx.lock();
         if (exit_found) {
+            mtx.unlock();
             return false;
         }
         pos_t current_pos = valid_positions.top();
         valid_positions.pop();
+        mtx.unlock();
 
         int i = current_pos.i;
         int j = current_pos.j;
 
-        // Se a posição atual já foi visitada ou é inválida, pule para a próxima iteração
+        // Se a posição atual já foi visitada ou é inválida, pula para a próxima iteração
         if (maze[i][j] != 'x' && maze[i][j] != 'e' && maze[i][j] != 's') continue;
 
         // Verifica se a posição atual é a saída
         if (maze[i][j] == 's') {
+            mtx.lock();
             maze[i][j] = 'o'; // Marca a posição da saída
             exit_found = true;
+            mtx.unlock();
             print_maze(maze, num_rows, num_cols);
             return true;
         } 
 
         // Marca a posição atual como visitada
         if (maze[i][j] == 'x') {
+            mtx.lock();
             maze[i][j] = '.';
+            mtx.unlock();
         } else if (maze[i][j] == 'e') {
+            mtx.lock();
             maze[i][j] = '.';
+            mtx.unlock();
         }
         // Direções: direita, esquerda, baixo, cima
         pos_t directions[4] = {{i, j + 1}, {i, j - 1}, {i + 1, j}, {i - 1, j}};
@@ -124,15 +134,16 @@ bool walk(pos_t initial_pos) {
         for (auto& dir : directions) {
             if (isValid(dir.i, dir.j)) {
                 // Adiciona a posição válida e não visitada à pilha
+                mtx.lock();
                 valid_positions.push(dir);
-                thread ti(walk, dir);
-                ti.detach();
+                mtx.unlock();
             }
         }
 
         // Imprime o labirinto após cada passo
+        print_mtx.lock();
         print_maze(maze, num_rows, num_cols);
-        //print_mtx.unlock();
+        print_mtx.unlock();
     }
 
     return false; // Retorna falso se a saída não for encontrada
@@ -141,9 +152,9 @@ bool walk(pos_t initial_pos) {
 
 
 
-int main(    int argc, char* argv[]) {
-    //"../data/maze.txt"
-    pos_t initial_pos = load_maze( argv[1], &maze, num_rows, num_cols);
+
+int main(int argc, char* argv[]) {
+    pos_t initial_pos = load_maze(argv[1], &maze, num_rows, num_cols);
 
     std::thread t1(walk, initial_pos);
 
