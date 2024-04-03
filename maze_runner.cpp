@@ -87,7 +87,6 @@ bool walk(pos_t initial_pos) {
         int i = current_pos.i;
         int j = current_pos.j;
 
-        // Se a posição atual já foi visitada ou é inválida, pule para a próxima iteração
         if (maze[i][j] != 'x' && maze[i][j] != 'e' && maze[i][j] != 's') continue;
 
         // Verifica se a posição atual é a saída
